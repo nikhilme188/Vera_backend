@@ -35,10 +35,10 @@ def get_llm(temperature: float = None, max_tokens: int = None) -> ChatGroq | Non
         return None
 
 
-def call_llm(system_prompt: str, user_prompt: str, temperature: float = None,
+async def call_llm(system_prompt: str, user_prompt: str, temperature: float = None,
              max_tokens: int = None, response_format: str = "json_object"):
     """
-    Call Groq chat completions API via LangChain.
+    Call Groq chat completions API via LangChain asynchronously.
     If response_format='text', returns raw string.
     If response_format='json_object', returns parsed JSON dict.
     Returns None on failure. Output is deterministic (temperature=0, seed=42).
@@ -53,7 +53,7 @@ def call_llm(system_prompt: str, user_prompt: str, temperature: float = None,
     ]
 
     try:
-        response = llm.invoke(messages)
+        response = await llm.ainvoke(messages)
         content = str(response.content)
 
         # Return raw text if requested
@@ -77,10 +77,10 @@ def call_llm(system_prompt: str, user_prompt: str, temperature: float = None,
         return None
 
 
-def call_llm_text(system_prompt: str, user_prompt: str, temperature: float = None,
+async def call_llm_text(system_prompt: str, user_prompt: str, temperature: float = None,
                   max_tokens: int = None) -> str | None:
     """
-    Call Groq API and return raw text (no JSON parsing) via LangChain.
+    Call Groq API and return raw text (no JSON parsing) via LangChain asynchronously.
     Output is deterministic for the same input.
     """
     llm = get_llm(temperature, max_tokens)
@@ -93,7 +93,7 @@ def call_llm_text(system_prompt: str, user_prompt: str, temperature: float = Non
     ]
 
     try:
-        response = llm.invoke(messages)
+        response = await llm.ainvoke(messages)
         return str(response.content)
     except Exception as e:
         logger.error(f"Groq text call failed: {e}")

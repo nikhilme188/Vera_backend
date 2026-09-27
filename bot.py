@@ -113,7 +113,7 @@ def resolve_contexts(trigger_id: str) -> tuple[dict, dict, dict, dict | None]:
     return category, merchant, trigger, customer
 
 
-def compose_message(category: dict, merchant: dict, trigger: dict,
+async def compose_message(category: dict, merchant: dict, trigger: dict,
                     customer: dict | None, conv_id: str = None) -> dict | None:
     """
     Compose a message using the LLM.
@@ -147,7 +147,7 @@ def compose_message(category: dict, merchant: dict, trigger: dict,
         user_prompt = f"=== RETRIEVED CONTEXT (RAG) ===\n{rag_context}\n\n{user_prompt}"
 
     # Call LLM
-    result = call_llm(system_prompt, user_prompt)
+    result = await call_llm(system_prompt, user_prompt)
     if not result:
         logger.error("LLM returned None for composition")
         return None
@@ -169,7 +169,7 @@ def compose_message(category: dict, merchant: dict, trigger: dict,
         # One retry with explicit fix instructions
         logger.info("Retrying composition with fix instructions...")
         fix_prompt = user_prompt + f"\n\nPREVIOUS ATTEMPT HAD ISSUES: {', '.join(issues)}\nFix these issues and compose again."
-        result = call_llm(system_prompt, fix_prompt)
+        result = await call_llm(system_prompt, fix_prompt)
         if not result:
             return None
 
@@ -341,7 +341,7 @@ async def tick(request: Request):
 
         # Compose the message
         try:
-            result = compose_message(category, merchant, trigger_data, customer, conv_id)
+            result = await compose_message(category, merchant, trigger_data, customer, conv_id)
         except Exception as e:
             logger.error(f"Composition failed for {trigger_id}: {e}")
             continue
@@ -452,7 +452,7 @@ async def reply(request: Request):
     )
 
     try:
-        result = call_llm(system_prompt, user_prompt)
+        result = await call_llm(system_prompt, user_prompt)
     except Exception as e:
         logger.error(f"LLM reply failed for {conv_id}: {e}")
         return {"action": "wait", "wait_seconds": 1800, "rationale": "Internal error; backing off."}
@@ -473,7 +473,7 @@ async def reply(request: Request):
             logger.warning(f"Reply body is repeated in {conv_id}, modifying...")
             # Try to get a different response
             fix_prompt = user_prompt + "\n\nIMPORTANT: Your previous response was identical to an already-sent message. Write a DIFFERENT response."
-            result2 = call_llm(system_prompt, fix_prompt)
+            result2 = await call_llm(system_prompt, fix_prompt)
             if result2 and result2.get("action") == "send" and result2.get("body"):
                 result = result2
             else:
@@ -563,7 +563,7 @@ async def start_conversation(request: Request):
         f"- Respond with ONLY the greeting text, no JSON\n"
     )
 
-    greeting = call_llm(
+    greeting = await call_llm(
         system_prompt="You are Vera, magicpin's friendly AI assistant. Reply with only the greeting text.",
         user_prompt=greeting_prompt,
         response_format="text",

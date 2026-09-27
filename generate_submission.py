@@ -9,6 +9,7 @@ import json
 import sys
 import os
 import time
+import asyncio
 from pathlib import Path
 
 # Imports from local composer package (same directory)
@@ -28,7 +29,7 @@ def load_json(path: Path) -> dict:
         return json.load(f)
 
 
-def main():
+async def main():
     # Load test pairs
     test_pairs = load_json(TEST_PAIRS_PATH)["pairs"]
     print(f"Loaded {len(test_pairs)} test pairs")
@@ -94,7 +95,7 @@ def main():
         )
 
         # Call LLM
-        result = call_llm(system_prompt, user_prompt)
+        result = await call_llm(system_prompt, user_prompt)
         if not result:
             print(f"  FAIL: LLM returned None")
             results.append({
@@ -114,7 +115,7 @@ def main():
         if not is_valid:
             print(f"  INVALID — retrying...")
             fix_prompt = user_prompt + f"\n\nPREVIOUS ATTEMPT HAD ISSUES: {', '.join(issues)}\nFix and compose again."
-            result = call_llm(system_prompt, fix_prompt)
+            result = await call_llm(system_prompt, fix_prompt)
             if not result:
                 results.append({
                     "test_id": test_id,
@@ -149,4 +150,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
