@@ -69,12 +69,10 @@ async def startup_event():
     rag_engine.initialize(docs)
     logger.info(f"RAG engine ready: {rag_engine.is_ready}")
 
-# Serve frontend chatbot UI
+# Root endpoint (Frontend is deployed separately)
 @app.get("/")
 async def dashboard():
-    import os
-    frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend", "index.html")
-    return FileResponse(frontend_path, media_type="text/html")
+    return {"status": "Vera API is running. Frontend is hosted separately."}
 
 # API: get all loaded contexts for dashboard
 @app.get("/v1/contexts")
